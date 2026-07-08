@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Meu Treino</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14161c">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#14161c;
+    --bg-elev:#1c1f28;
+    --bg-elev2:#252935;
+    --text:#F2EFEA;
+    --text-dim:#9599A6;
+    --accent:#FF6A4D;
+    --accent-dim:#40241c;
+    --done:#33D6A6;
+    --done-dim:#123028;
+    --border:#2A2E3A;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  #app{max-width:480px;margin:0 auto;padding-bottom:100px;}
+
+  header{position:sticky;top:0;background:var(--bg);z-index:20;
+    padding:14px 16px 0;border-bottom:1px solid var(--border);}
+  header h1{font-size:15px;font-weight:600;margin:0 0 12px;letter-spacing:0.2px;
+    color:var(--text-dim);text-transform:uppercase;}
+
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;
+    scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex:1;min-width:74px;text-align:center;padding:10px 6px;
+    border-radius:10px;background:var(--bg-elev);border:1px solid var(--border);
+    font-size:12.5px;font-weight:600;color:var(--text-dim);cursor:pointer;}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#1a0f0a;}
+
+  .daymeta{display:flex;justify-content:space-between;align-items:center;
+    padding:12px 16px;font-size:12.5px;color:var(--text-dim);}
+  .daymeta b{color:var(--text);}
+
+  .section{padding:0 16px;}
+  .sectitle{font-size:12px;text-transform:uppercase;letter-spacing:0.6px;
+    color:var(--text-dim);margin:18px 0 8px;font-weight:600;}
+
+  .card{background:var(--bg-elev);border:1px solid var(--border);
+    border-radius:14px;padding:14px;margin-bottom:10px;}
+  .card.completed{border-color:var(--done);background:var(--done-dim);}
+
+  .cardhead{display:flex;align-items:flex-start;gap:10px;}
+  .num{width:24px;height:24px;border-radius:50%;background:var(--bg-elev2);
+    display:flex;align-items:center;justify-content:center;font-size:12px;
+    font-weight:700;flex-shrink:0;margin-top:1px;}
+  .card.completed .num{background:var(--done);color:#062018;}
+  .exname{font-size:15.5px;font-weight:600;line-height:1.3;}
+  .exmuscle{font-size:12px;color:var(--text-dim);margin-top:2px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0 34px;}
+  .chip{font-size:12.5px;padding:5px 9px;border-radius:7px;background:var(--bg-elev2);
+    color:var(--text);}
+  .chip.rpe{color:var(--accent);}
+  .chip.rest{color:var(--text);cursor:pointer;display:flex;align-items:center;gap:4px;}
+  .chip.rest:active{transform:scale(0.96);}
+
+  .setsrow{display:flex;gap:8px;margin:12px 0 0 34px;}
+  .setbtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);
+    background:var(--bg-elev2);color:var(--text-dim);font-size:13px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .setbtn.on{background:var(--done);border-color:var(--done);color:#062018;}
+
+  .noteToggle{margin:10px 0 0 34px;font-size:12.5px;color:var(--accent);cursor:pointer;
+    display:inline-block;}
+  .note{margin:8px 0 0 34px;font-size:13px;color:var(--text-dim);line-height:1.5;
+    display:none;border-left:2px solid var(--border);padding-left:10px;}
+  .note.show{display:block;}
+
+  .infobox{background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;
+    padding:12px 14px;margin-bottom:10px;font-size:13px;color:var(--text-dim);
+    line-height:1.5;}
+  .infobox b{color:var(--text);}
+
+  #timerbar{position:fixed;bottom:0;left:0;right:0;background:var(--accent);
+    color:#1a0f0a;padding:14px 18px;display:none;align-items:center;
+    justify-content:space-between;max-width:480px;margin:0 auto;
+    border-radius:16px 16px 0 0;z-index:30;}
+  #timerbar.show{display:flex;}
+  #timerbar .tlabel{font-size:12px;font-weight:700;text-transform:uppercase;
+    letter-spacing:0.5px;opacity:0.75;}
+  #timerbar .tval{font-size:26px;font-weight:800;font-family:ui-monospace,Menlo,monospace;}
+  #timerbar .tbtns{display:flex;gap:8px;}
+  #timerbar button{background:rgba(0,0,0,0.15);border:none;color:#1a0f0a;
+    width:38px;height:38px;border-radius:10px;font-size:16px;font-weight:700;
+    cursor:pointer;}
+
+  .resetbar{padding:14px 16px 4px;}
+  .resetbtn{width:100%;padding:12px;border-radius:10px;background:var(--bg-elev);
+    border:1px solid var(--border);color:var(--text-dim);font-size:13px;
+    font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Meu treino — upper/lower</h1>
+    <div class="tabs" id="tabs"></div>
+  </header>
+  <div class="daymeta">
+    <span id="daytitle" class="mono">—</span>
+    <span>~<b id="daytime">45</b> min</span>
+  </div>
+  <div class="section" id="content"></div>
+  <div class="resetbar">
+    <button class="resetbtn" id="resetBtn">Desmarcar séries deste treino</button>
+  </div>
+</div>
+
+<div id="timerbar">
+  <div>
+    <div class="tlabel" id="timerlabel">Descanso</div>
+    <div class="tval" id="timerval">01:30</div>
+  </div>
+  <div class="tbtns">
+    <button id="timerPause">⏸</button>
+    <button id="timerClose">✕</button>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  a1:{
+    label:"Upper A", time:"42–48",
+    warmup:"2–3min cardio leve + mobilidade de ombro + band pull-apart",
+    exercises:[
+      {name:"Supino reto (Smith ou barra)",sets:4,reps:"8–10",rpe:"7–8",rest:90,muscle:"Peitoral, tríceps, deltoide anterior",note:"Escápulas retraídas, barra desce até a linha do mamilo, cotovelos ~45–60° do tronco. Inspire na descida, expire subindo."},
+      {name:"Puxada frente (pulldown aberto)",sets:4,reps:"10–12",rpe:"7–8",rest:90,muscle:"Latíssimo, bíceps",note:"Puxe com o cotovelo, não com a mão. Controle a volta, sem deixar a barra 'subir sozinha'."},
+      {name:"Desenvolvimento c/ halteres",sets:3,reps:"10–12",rpe:7,rest:75,muscle:"Deltoide, tríceps",note:"Sentado, core firme, não hiperestender a lombar no topo."},
+      {name:"Remada baixa (cabo, pegada neutra)",sets:3,reps:"10–12",rpe:"7–8",rest:75,muscle:"Trapézio médio, romboides, latíssimo",note:"Puxe até o abdômen, aproxime as escápulas, sem balançar o tronco."},
+      {name:"Elevação lateral",sets:3,reps:"12–15",rpe:8,rest:60,muscle:"Deltoide medial",note:"Cotovelos levemente flexionados, suba até a altura do ombro, sem impulso."},
+      {name:"Tríceps na corda",sets:3,reps:"12–15",rpe:8,rest:60,muscle:"Tríceps",note:"Cotovelos fixos ao lado do corpo, extensão completa no final."}
+    ]
+  },
+  a2:{
+    label:"Lower A", time:"45–50",
+    warmup:"2–3min cardio leve + mobilidade de quadril/tornozelo + glute bridge",
+    exercises:[
+      {name:"Agachamento (Smith ou Hack)",sets:4,reps:"8–10",rpe:"7–8",rest:120,muscle:"Quadríceps, glúteo, core",note:"Joelhos seguem a direção dos pés, desça até paralelo, tronco ereto. Cuidado com joelho colapsando pra dentro."},
+      {name:"Leg press 45°",sets:3,reps:"10–12",rpe:8,rest:90,muscle:"Quadríceps, glúteo",note:"Não trave os joelhos no topo, amplitude completa controlada."},
+      {name:"Cadeira extensora",sets:3,reps:"12–15",rpe:8,rest:60,muscle:"Quadríceps (isolado)",note:"Pausa de 1s no topo, desça controlado."},
+      {name:"Mesa flexora",sets:3,reps:"10–12",rpe:"7–8",rest:60,muscle:"Isquiotibiais",note:"Evite arquear a lombar durante o movimento."},
+      {name:"Cadeira abdutora",sets:3,reps:15,rpe:7,rest:45,muscle:"Glúteo médio",note:"Movimento controlado, sem usar impulso do tronco."},
+      {name:"Panturrilha em pé",sets:4,reps:"12–15",rpe:8,rest:45,muscle:"Gastrocnêmio/sóleo",note:"Amplitude completa, pausa breve no topo e embaixo."}
+    ]
+  },
+  b1:{
+    label:"Upper B", time:"42–48",
+    warmup:"2–3min cardio leve + mobilidade de ombro + scapular retraction",
+    exercises:[
+      {name:"Remada curvada (barra ou convergente)",sets:4,reps:"8–10",rpe:"7–8",rest:90,muscle:"Latíssimo, trapézio, romboides",note:"Tronco levemente inclinado e fixo, puxe até o abdômen."},
+      {name:"Desenvolvimento militar (barra/halteres)",sets:4,reps:"8–10",rpe:"7–8",rest:90,muscle:"Deltoide, tríceps",note:"Core ativado, não arquear a lombar excessivamente."},
+      {name:"Puxada supinada ou remada alta",sets:3,reps:"10–12",rpe:"7–8",rest:75,muscle:"Latíssimo, bíceps, deltoide posterior",note:"Cotovelos guiam o movimento, controle a fase excêntrica."},
+      {name:"Crucifixo ou peck deck",sets:3,reps:"12–15",rpe:8,rest:60,muscle:"Peitoral (isolado)",note:"Leve flexão de cotovelo fixa, amplitude sem forçar o ombro."},
+      {name:"Elevação posterior (peck deck invertido)",sets:3,reps:"12–15",rpe:8,rest:60,muscle:"Deltoide posterior",note:"Movimento em arco, aperte as escápulas no final."},
+      {name:"Rosca direta",sets:3,reps:"12–15",rpe:8,rest:60,muscle:"Bíceps",note:"Cotovelos fixos ao lado do corpo, sem balançar."}
+    ]
+  },
+  b2:{
+    label:"Lower B", time:"45–50",
+    warmup:"2–3min cardio leve + mobilidade de quadril + monster walk c/ miniband",
+    exercises:[
+      {name:"Stiff / RDL (barra ou halteres)",sets:4,reps:"8–10",rpe:"7–8",rest:120,muscle:"Isquiotibiais, glúteo, lombar",note:"Joelhos com leve flexão fixa, quadril empurra pra trás, tronco reto — não arredondar a coluna."},
+      {name:"Hip thrust (Smith ou máquina)",sets:4,reps:"8–12",rpe:8,rest:90,muscle:"Glúteo máximo",note:"Escápulas apoiadas no banco, contração forte do glúteo no topo, força vem do calcanhar."},
+      {name:"Cadeira flexora",sets:3,reps:"12–15",rpe:"7–8",rest:60,muscle:"Isquiotibiais (isolado)",note:"Movimento controlado, pausa no pico da contração."},
+      {name:"Afundo búlgaro (banco)",sets:3,reps:"10 cada perna",rpe:7,rest:75,muscle:"Quadríceps, glúteo",note:"Tronco levemente inclinado à frente, joelho de trás quase toca o chão."},
+      {name:"Cadeira adutora",sets:3,reps:15,rpe:7,rest:45,muscle:"Adutores",note:"Movimento controlado, sem forçar a amplitude final."},
+      {name:"Panturrilha sentado",sets:4,reps:"15–20",rpe:8,rest:45,muscle:"Sóleo",note:"Amplitude completa, foco na contração no topo."}
+    ]
+  }
+};
+
+const ABDOMEN = {
+  title:"Abdômen (fim do treino — 3x/semana: A2, B2 e um dia extra)",
+  items:["Prancha frontal — 3x30–45s","Elevação de pernas — 3x12–15","Abdominal no cabo (crunch) — 3x12–15","Prancha lateral — 3x20–30s cada lado"]
+};
+
+let state = JSON.parse(sessionStorage_safe());
+function sessionStorage_safe(){
+  try{ return sessionStorage.getItem('treinoState') || '{}'; }catch(e){ return '{}'; }
+}
+function saveState(){
+  try{ sessionStorage.setItem('treinoState', JSON.stringify(state)); }catch(e){}
+}
+
+let currentDay = 'a1';
+let timerInterval = null;
+
+function renderTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  Object.keys(DATA).forEach(key=>{
+    const d = document.createElement('div');
+    d.className = 'tab' + (key===currentDay ? ' active':'');
+    d.textContent = DATA[key].label;
+    d.onclick = ()=>{ currentDay = key; render(); };
+    tabs.appendChild(d);
+  });
+}
+
+function toggleSet(dayKey, exIdx, setIdx){
+  const k = dayKey+'-'+exIdx;
+  if(!state[k]) state[k] = [];
+  const pos = state[k].indexOf(setIdx);
+  if(pos>-1) state[k].splice(pos,1); else state[k].push(setIdx);
+  saveState();
+  render();
+}
+
+function toggleNote(exIdx){
+  const el = document.getElementById('note-'+exIdx);
+  el.classList.toggle('show');
+}
+
+function startTimer(seconds, label){
+  clearInterval(timerInterval);
+  let remaining = seconds;
+  const bar = document.getElementById('timerbar');
+  const val = document.getElementById('timerval');
+  const lbl = document.getElementById('timerlabel');
+  lbl.textContent = label;
+  bar.classList.add('show');
+  let paused = false;
+
+  function tick(){
+    const m = Math.floor(remaining/60).toString().padStart(2,'0');
+    const s = (remaining%60).toString().padStart(2,'0');
+    val.textContent = m+':'+s;
+    if(remaining<=0){
+      clearInterval(timerInterval);
+      lbl.textContent = 'Descanso finalizado!';
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+      return;
+    }
+    remaining--;
+  }
+  tick();
+  timerInterval = setInterval(tick, 1000);
+
+  document.getElementById('timerPause').onclick = ()=>{
+    paused = !paused;
+    document.getElementById('timerPause').textContent = paused ? '▶' : '⏸';
+    if(paused){ clearInterval(timerInterval); }
+    else{ timerInterval = setInterval(tick, 1000); }
+  };
+  document.getElementById('timerClose').onclick = ()=>{
+    clearInterval(timerInterval);
+    bar.classList.remove('show');
+  };
+}
+
+function render(){
+  renderTabs();
+  const day = DATA[currentDay];
+  document.getElementById('daytitle').textContent = day.label;
+  document.getElementById('daytime').textContent = day.time;
+
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+
+  const warm = document.createElement('div');
+  warm.className = 'infobox';
+  warm.innerHTML = '<b>Aquecimento (8–10min):</b> ' + day.warmup;
+  content.appendChild(warm);
+
+  const sec = document.createElement('div');
+  sec.className = 'sectitle';
+  sec.textContent = 'Exercícios';
+  content.appendChild(sec);
+
+  day.exercises.forEach((ex, i)=>{
+    const k = currentDay+'-'+i;
+    const checked = state[k] || [];
+    const isComplete = checked.length >= ex.sets;
+
+    const card = document.createElement('div');
+    card.className = 'card' + (isComplete ? ' completed':'');
+
+    let setsHtml = '';
+    for(let s=0;s<ex.sets;s++){
+      const on = checked.includes(s) ? ' on':'';
+      setsHtml += '<div class="setbtn'+on+'" onclick="toggleSet(\''+currentDay+'\','+i+','+s+')">'+(s+1)+'</div>';
+    }
+
+    card.innerHTML =
+      '<div class="cardhead">'+
+        '<div class="num">'+(i+1)+'</div>'+
+        '<div><div class="exname">'+ex.name+'</div>'+
+        '<div class="exmuscle">'+ex.muscle+'</div></div>'+
+      '</div>'+
+      '<div class="chips">'+
+        '<div class="chip mono">'+ex.sets+'x '+ex.reps+'</div>'+
+        '<div class="chip rpe mono">RPE '+ex.rpe+'</div>'+
+        '<div class="chip rest" onclick="startTimer('+ex.rest+',\''+ex.name.replace(/'/g,"")+'\')">⏱ '+ex.rest+'s</div>'+
+      '</div>'+
+      '<div class="setsrow">'+setsHtml+'</div>'+
+      '<div class="noteToggle" onclick="toggleNote('+i+')">técnica / dicas</div>'+
+      '<div class="note" id="note-'+i+'">'+ex.note+'</div>';
+
+    content.appendChild(card);
+  });
+
+  if(currentDay==='a2' || currentDay==='b2'){
+    const abd = document.createElement('div');
+    abd.className = 'sectitle';
+    abd.textContent = 'Abdômen';
+    content.appendChild(abd);
+    const box = document.createElement('div');
+    box.className = 'infobox';
+    box.innerHTML = ABDOMEN.items.join('<br>');
+    content.appendChild(box);
+  }
+}
+
+document.getElementById('resetBtn').onclick = ()=>{
+  Object.keys(state).forEach(k=>{
+    if(k.startsWith(currentDay+'-')) delete state[k];
+  });
+  saveState();
+  render();
+};
+
+render();
+</script>
+</body>
+</html>
